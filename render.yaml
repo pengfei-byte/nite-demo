@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: nite
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: POPVID_API_KEY
+        sync: false
+      - key: POPVID_BASE_URL
+        value: https://popvid.ai/api/public/v1
+      - key: MAX_CONCURRENT_SESSIONS
+        value: "3"
