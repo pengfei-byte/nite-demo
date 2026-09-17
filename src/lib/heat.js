@@ -1,8 +1,8 @@
 const CRUDE =
-  /操|肏|裸|胸|奶|逼|鸡巴|阴|射|dick|pussy|cock|nude|naked|fuck|sex|脱光|胸罩|内裤|插|舔|高潮/i;
+  /dick|pussy|cock|nude|naked|fuck|sex|blowjob|boobs|tits|ass\b|horny|cum/i;
 const PATIENT =
-  /为什么|你呢|今天|怎么|名字|哪里|工作|喜欢什么|看起来|眼睛|声音|有意思|无聊|睡不着|刚|在干|从哪/;
-const COMPLIMENT = /漂亮|好看|美|迷人|声音|气质|特别|有趣/;
+  /why|what about you|today|how|name|where|work|like|look|eyes|voice|interesting|bored|can't sleep|awake|from/;
+const COMPLIMENT = /pretty|beautiful|gorgeous|hot|voice|interesting|cool/;
 
 export function createHeat() {
   return { value: 1, turns: 0 };
@@ -21,7 +21,7 @@ export function applyUserTurn(heat, text) {
     if (text.trim().length > 16) v += 0.08;
     if (PATIENT.test(text)) v += 0.12;
     if (COMPLIMENT.test(text)) v += 0.05;
-    if (/^(hi|hey|你好|在吗|哈喽|hello)\s*$/i.test(text.trim())) v -= 0.1;
+    if (/^(hi|hey|hello|yo|sup)\s*$/i.test(text.trim())) v -= 0.1;
   }
   next.value = Math.min(5, Math.max(1, Number(v.toFixed(2))));
   return next;
@@ -36,9 +36,9 @@ export function wrapTurn(text, stage) {
 }
 
 export const STAGE_LABEL = {
-  1: "试探",
-  2: "松动",
-  3: "调情",
-  4: "靠近",
-  5: "放开",
+  1: "testing",
+  2: "warming",
+  3: "flirting",
+  4: "close",
+  5: "open",
 };

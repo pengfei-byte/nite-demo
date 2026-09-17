@@ -2,13 +2,14 @@ export function canSpeech() {
   return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 }
 
-export function startSpeech({ lang = "zh-CN", onResult, onEnd, onError }) {
+export function startSpeech({ lang = "en-US", onResult, onEnd, onError }) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
   const rec = new SR();
   rec.lang = lang;
   rec.continuous = true;
   rec.interimResults = true;
+  rec.maxAlternatives = 1;
   rec.onresult = (event) => {
     let interim = "";
     let finalText = "";
@@ -21,6 +22,10 @@ export function startSpeech({ lang = "zh-CN", onResult, onEnd, onError }) {
   };
   rec.onerror = (e) => onError?.(e);
   rec.onend = () => onEnd?.();
-  rec.start();
+  try {
+    rec.start();
+  } catch {
+    return null;
+  }
   return rec;
 }

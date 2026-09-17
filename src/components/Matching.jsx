@@ -15,9 +15,9 @@ export default function Matching({ roster }) {
       <h1 className="wordmark">NITE</h1>
       <div className="pulse" />
       <p className="scan">
-        {names.length ? names[i % names.length] : "……"}
+        {names.length ? names[i % names.length] : "…"}
       </p>
-      <p className="lede dim">不要催。她也在看你。</p>
+      <p className="lede dim">Don&apos;t rush. She&apos;s looking at you too.</p>
     </section>
   );
 }

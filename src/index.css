@@ -6,8 +6,8 @@
   --ember: #e4573d;
   --ember-2: #ff8a6a;
   --line: rgba(244, 237, 228, 0.12);
-  --serif: "Fraunces", "Songti SC", serif;
-  --sans: "Manrope", "PingFang SC", sans-serif;
+  --serif: "Fraunces", Georgia, serif;
+  --sans: "Manrope", "Helvetica Neue", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -164,7 +164,7 @@ img { display: block; max-width: 100%; }
   font-family: var(--serif);
   font-size: 34px;
   line-height: 1.15;
-  margin: 0 0 8px;
+  margin: 0;
   font-weight: 500;
 }
 
@@ -281,7 +281,6 @@ img { display: block; max-width: 100%; }
   letter-spacing: 0.08em;
 }
 .status-dot { color: #f3d2c6; }
-.budget { font-variant-numeric: tabular-nums; color: var(--muted); }
 
 .identity {
   position: absolute;
@@ -363,7 +362,7 @@ img { display: block; max-width: 100%; }
 }
 .composer {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto;
   gap: 6px;
 }
 .composer input {
@@ -376,11 +375,34 @@ img { display: block; max-width: 100%; }
 .mic, .send {
   border: 0;
   border-radius: 999px;
-  padding: 0 12px;
+  padding: 0 14px;
   background: #2a221e;
 }
-.mic.on { background: var(--ember); color: #1a0b08; }
 .send { background: var(--ink); color: #111; font-weight: 700; }
+.live-mic {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7dffb0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.live-mic::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #7dffb0;
+  box-shadow: 0 0 8px #7dffb0;
+}
+.live-mic.off {
+  color: var(--muted);
+}
+.live-mic.off::before {
+  background: var(--muted);
+  box-shadow: none;
+}
 .actions { display: flex; gap: 8px; }
 .actions .btn { flex: 1; padding: 10px 8px; }
 

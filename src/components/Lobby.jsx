@@ -27,7 +27,7 @@ export default function Lobby({
       <header className="topbar">
         <span className="wordmark sm">NITE</span>
         <span className="live">
-          <i /> {roster.online || "—"} 在线
+          <i /> {roster.online || "—"} online
         </span>
       </header>
 
@@ -35,15 +35,14 @@ export default function Lobby({
         <video ref={videoRef} autoPlay muted playsInline />
         {!localStream && (
           <button className="ghost-cam" onClick={onCam}>
-            打开镜头
+            Turn camera on
           </button>
         )}
-        <span className="chip">你</span>
+        <span className="chip">You</span>
       </div>
 
       <div className="copy">
-        <h1>下一秒，随机接通。</h1>
-        <p>对方是女人，有脾气。太急，她会笑你。</p>
+        <h1>Next second, you&apos;re live.</h1>
       </div>
 
       <div className="moods">
@@ -61,11 +60,11 @@ export default function Lobby({
       {error && <p className="banner">{error}</p>}
 
       <button className="btn btn-ember lg" onClick={onStart}>
-        开始匹配
+        Start matching
       </button>
 
       <div className="nearby">
-        <p>附近还醒着</p>
+        <p>Still up nearby</p>
         <div className="cards">
           {(roster.characters || []).map((c) => (
             <button key={c.id} className="card" onClick={() => onPick(c.id)}>

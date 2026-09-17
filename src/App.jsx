@@ -10,7 +10,7 @@ const AGE_KEY = "nite.age.ok";
 function explainFetchError(err, data, status) {
   if (data?.error) {
     const e = data.error;
-    const bits = [e.message || "接通失败"];
+    const bits = [e.message || "Couldn't connect"];
     if (e.code) bits.push(`code=${e.code}`);
     if (e.status) bits.push(`status=${e.status}`);
     if (e.request_id) bits.push(`request_id=${e.request_id}`);
@@ -21,10 +21,10 @@ function explainFetchError(err, data, status) {
   }
   if (err?.name === "TypeError" || /failed to fetch/i.test(err?.message || "")) {
     return new Error(
-      "本地服务断开了（Failed to fetch）。请确认终端里 npm run dev 还在跑，然后刷新页面。"
+      "Local server is down (Failed to fetch). Make sure npm run dev is running, then refresh."
     );
   }
-  return new Error(err?.message || `接通失败${status ? ` (${status})` : ""}`);
+  return new Error(err?.message || `Couldn't connect${status ? ` (${status})` : ""}`);
 }
 
 async function connectSession(payload) {
@@ -68,7 +68,11 @@ export default function App() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: 640, height: 480 },
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
       setLocalStream(stream);
       return stream;
@@ -118,7 +122,7 @@ export default function App() {
         setView("call");
       } catch (err) {
         await minWait;
-        setMatchError(err.message || "今晚有点挤");
+        setMatchError(err.message || "Busy tonight");
         setView("lobby");
       }
     },

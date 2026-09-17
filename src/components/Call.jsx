@@ -4,21 +4,13 @@ import { applyUserTurn, createHeat, stageOf, wrapTurn, STAGE_LABEL } from "../li
 import { canSpeech, startSpeech } from "../lib/speech.js";
 
 const SIGNALS = [
-  { id: "lean", label: "靠近", text: "对方把脸靠近了镜头。" },
-  { id: "smile", label: "笑", text: "对方向你笑了笑，等你反应。" },
-  { id: "wink", label: "眨眼", text: "对方眨了眨眼，有点得意。" },
+  { id: "lean", label: "Lean in", text: "He leans closer to the camera." },
+  { id: "smile", label: "Smile", text: "He smiles at you, waiting." },
+  { id: "wink", label: "Wink", text: "He winks, a little too pleased with himself." },
 ];
 
 const OPENER =
-  "对方刚被随机接通。这是你们第一次对上眼。用一句很短的中文打招呼：有点防备，有点好奇。先别甜。不要说英文。";
-
-function fmtMs(ms) {
-  if (ms == null || ms < 0) return "—";
-  const s = Math.max(0, Math.round(ms / 1000));
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${String(r).padStart(2, "0")}`;
-}
+  "He just got matched on a random video call. First look. Greet him in one short English line — a little guarded, a little curious. Do not be sweet yet. Do not speak any other language.";
 
 export default function Call({ match, localStream, onNext, onEnd, onRemoteEnd }) {
   const remoteRef = useRef(null);
@@ -27,16 +19,20 @@ export default function Call({ match, localStream, onNext, onEnd, onRemoteEnd })
   const heatRef = useRef(createHeat());
   const greeted = useRef(false);
   const ended = useRef(false);
+  const recRef = useRef(null);
+  const pendingRef = useRef("");
+  const flushTimer = useRef(null);
+  const micMutedRef = useRef(false);
+  const herTalkingRef = useRef(false);
+  const submitRef = useRef(() => {});
   const [heat, setHeat] = useState(heatRef.current);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
-  const [status, setStatus] = useState("接通中");
+  const [micMuted, setMicMuted] = useState(false);
+  const [status, setStatus] = useState("Connecting");
   const [caption, setCaption] = useState("");
   const [log, setLog] = useState([]);
-  const [budget, setBudget] = useState(null);
-  const [muted, setMuted] = useState(false);
   const [live, setLive] = useState(false);
-  const recRef = useRef(null);
   const stage = stageOf(heat);
   const character = match.character;
 
@@ -50,16 +46,31 @@ export default function Call({ match, localStream, onNext, onEnd, onRemoteEnd })
       remoteVideo: remoteRef.current,
       onEvent: (msg) => {
         const d = msg.data || {};
-        if (msg.type === "session.ready") setStatus("她在看你");
-        if (msg.type === "media.clip" && d.kind === "idle") setStatus("看着你");
-        if (msg.type === "turn.started") setStatus("在回你");
-        if (msg.type === "turn.visible") setStatus("在说话");
+        if (msg.type === "session.ready") setStatus("She's looking");
+        if (msg.type === "media.clip" && d.kind === "idle") {
+          herTalkingRef.current = false;
+          setStatus("Watching you");
+        }
+        if (msg.type === "turn.started") {
+          herTalkingRef.current = true;
+          pendingRef.current = "";
+          setInput("");
+          clearTimeout(flushTimer.current);
+          try {
+            recRef.current?.stop?.();
+          } catch {
+            /* ignore */
+          }
+          setStatus("Answering");
+        }
+        if (msg.type === "turn.visible") {
+          herTalkingRef.current = true;
+          setStatus("Talking");
+        }
         if (msg.type === "turn.text" && d.text) {
+          herTalkingRef.current = true;
           setCaption(d.text);
           setLog((prev) => [...prev.slice(-12), { role: "her", text: d.text }]);
-        }
-        if (msg.type === "usage.tick" || msg.type === "session.renewed") {
-          setBudget(d);
         }
         if (msg.type === "media.clip" && d.kind === "idle" && !greeted.current) {
           greeted.current = true;
@@ -67,11 +78,8 @@ export default function Call({ match, localStream, onNext, onEnd, onRemoteEnd })
         }
       },
       onError: (err) => {
-        if (err?.code === "content_rejected") {
-          setStatus("这句话她没接");
-        } else if (err?.code === "rate_limited") {
-          setStatus("说慢一点");
-        }
+        if (err?.code === "content_rejected") setStatus("She ignored that");
+        else if (err?.code === "rate_limited") setStatus("Slow down");
       },
       onEnded: (data) => {
         if (ended.current) return;
@@ -107,31 +115,88 @@ export default function Call({ match, localStream, onNext, onEnd, onRemoteEnd })
     const next = applyUserTurn(heatRef.current, asAction ? "" : text);
     heatRef.current = next;
     setHeat(next);
-    const stageNow = stageOf(next);
-    const payload = asAction ? text : text;
-    clientRef.current.say(wrapTurn(payload, stageNow));
-    setLog((prev) => [...prev.slice(-12), { role: "me", text: asAction ? `* ${raw.replace(/^The user /, "")}` : text }]);
+    clientRef.current.say(wrapTurn(text, stageOf(next)));
+    setLog((prev) => [
+      ...prev.slice(-12),
+      { role: "me", text: asAction ? `* ${text}` : text },
+    ]);
     setInput("");
-    setStatus("等她");
+    setStatus("Waiting");
   }
 
-  function onMicDown() {
-    if (!canSpeech() || listening) return;
-    setListening(true);
-    recRef.current = startSpeech({
-      onResult: ({ interim, finalText }) => {
-        setInput((prev) => (finalText ? `${prev} ${finalText}`.trim() : prev || interim));
-      },
-      onEnd: () => setListening(false),
-      onError: () => setListening(false),
+  submitRef.current = submit;
+
+  useEffect(() => {
+    micMutedRef.current = micMuted;
+    localStream?.getAudioTracks().forEach((track) => {
+      track.enabled = !micMuted;
     });
-  }
 
-  function onMicUp() {
-    recRef.current?.stop?.();
-    recRef.current = null;
-    setListening(false);
-  }
+    const stopRec = () => {
+      try {
+        recRef.current?.stop?.();
+      } catch {
+        /* already stopped */
+      }
+      recRef.current = null;
+      setListening(false);
+    };
+
+    if (micMuted || !canSpeech()) {
+      stopRec();
+      return undefined;
+    }
+
+    let stopped = false;
+    const boot = () => {
+      if (stopped || micMutedRef.current || recRef.current) return;
+      if (herTalkingRef.current) {
+        setTimeout(boot, 400);
+        return;
+      }
+      const rec = startSpeech({
+        lang: "en-US",
+        onResult: ({ interim, finalText }) => {
+          if (herTalkingRef.current) return;
+          if (finalText) {
+            pendingRef.current = `${pendingRef.current} ${finalText}`.trim();
+            setInput(pendingRef.current);
+            clearTimeout(flushTimer.current);
+            flushTimer.current = setTimeout(() => {
+              const spoken = pendingRef.current.trim();
+              pendingRef.current = "";
+              setInput("");
+              if (spoken.length >= 2) submitRef.current(spoken);
+            }, 900);
+          } else if (interim) {
+            setInput(
+              `${pendingRef.current}${pendingRef.current ? " " : ""}${interim}`.trim()
+            );
+          }
+        },
+        onEnd: () => {
+          recRef.current = null;
+          setListening(false);
+          if (!stopped && !micMutedRef.current) setTimeout(boot, 180);
+        },
+        onError: (e) => {
+          if (e?.error === "not-allowed") {
+            stopped = true;
+            setListening(false);
+          }
+        },
+      });
+      recRef.current = rec;
+      if (rec) setListening(true);
+    };
+
+    boot();
+    return () => {
+      stopped = true;
+      clearTimeout(flushTimer.current);
+      stopRec();
+    };
+  }, [micMuted, localStream, match.credentials.session_id]);
 
   return (
     <section className="call" data-stage={stage}>
@@ -144,12 +209,11 @@ export default function Call({ match, localStream, onNext, onEnd, onRemoteEnd })
           poster={character.seed}
           onPlaying={() => setLive(true)}
         />
-        {!live && <div className="connecting">画面接通中</div>}
+        {!live && <div className="connecting">Connecting video</div>}
         <div className="vignette" />
         <header className="call-top">
           <span className="wordmark sm">NITE</span>
           <span className="status-dot">{status}</span>
-          <span className="budget">{fmtMs(budget?.budget_remaining_ms)}</span>
         </header>
 
         <div className="identity">
@@ -169,7 +233,7 @@ export default function Call({ match, localStream, onNext, onEnd, onRemoteEnd })
 
         <aside className="pip">
           <video ref={meRef} autoPlay muted playsInline />
-          <span>你</span>
+          <span>You</span>
         </aside>
 
         {caption && <p className="caption">{caption}</p>}
@@ -181,6 +245,10 @@ export default function Call({ match, localStream, onNext, onEnd, onRemoteEnd })
                 {s.label}
               </button>
             ))}
+            {canSpeech() && !micMuted && listening && (
+              <span className="live-mic">Listening</span>
+            )}
+            {micMuted && <span className="live-mic off">Muted</span>}
           </div>
           <form
             className="composer"
@@ -192,36 +260,23 @@ export default function Call({ match, localStream, onNext, onEnd, onRemoteEnd })
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="说点什么。别只会 hi。"
+              placeholder={
+                micMuted
+                  ? "Mic is off. Type if you want."
+                  : "Just talk. Type only if you need to."
+              }
               maxLength={2000}
             />
-            {canSpeech() && (
-              <button
-                type="button"
-                className={listening ? "mic on" : "mic"}
-                onMouseDown={onMicDown}
-                onMouseUp={onMicUp}
-                onMouseLeave={onMicUp}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  onMicDown();
-                }}
-                onTouchEnd={onMicUp}
-              >
-                按住说
-              </button>
-            )}
             <button type="submit" className="send">
-              送出
+              Send
             </button>
           </form>
           <div className="actions">
-            <button className="btn btn-ghost" onClick={() => setMuted((m) => {
-              const next = !m;
-              if (remoteRef.current) remoteRef.current.muted = next;
-              return next;
-            })}>
-              {muted ? "取消静音" : "静音"}
+            <button
+              className={micMuted ? "btn btn-ember" : "btn btn-ghost"}
+              onClick={() => setMicMuted((on) => !on)}
+            >
+              {micMuted ? "Unmute" : "Mute"}
             </button>
             <button
               className="btn btn-ember"
@@ -241,7 +296,7 @@ export default function Call({ match, localStream, onNext, onEnd, onRemoteEnd })
                 onEnd();
               }}
             >
-              挂断
+              Hang up
             </button>
           </div>
         </div>

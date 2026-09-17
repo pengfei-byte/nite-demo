@@ -58,7 +58,7 @@ async function createPopvidSession(character, { dropSeed = false } = {}) {
       prompt: character.prompt,
     },
     scene: { prompt: character.scene },
-    language: "zh-CN",
+    language: "en",
     limits: { max_turns: 200, turn_rate_per_min: 20 },
     credentials_ttl_ms: 600_000,
     metadata: {
@@ -95,7 +95,7 @@ app.post("/api/connect", async (req, res) => {
     return res.status(429).json({
       error: {
         code: "busy",
-        message: "现在有人在聊，稍后再试。",
+        message: "Someone else is on a call. Try again in a moment.",
         status: 429,
         retry_after_ms: 8000,
       },
@@ -105,7 +105,7 @@ app.post("/api/connect", async (req, res) => {
     return res.status(429).json({
       error: {
         code: "rate_limited",
-        message: "这台设备匹配太勤了，过几分钟再来。",
+        message: "Too many matches from this device. Give it a few minutes.",
         status: 429,
         retry_after_ms: 60000,
       },
@@ -116,7 +116,7 @@ app.post("/api/connect", async (req, res) => {
     return res.status(503).json({
       error: {
         code: "misconfigured",
-        message: "服务端未配置 POPVID_API_KEY",
+        message: "Server is missing POPVID_API_KEY",
         status: 503,
       },
     });
@@ -142,7 +142,7 @@ app.post("/api/connect", async (req, res) => {
     return res.status(502).json({
       error: {
         code: "upstream_unreachable",
-        message: `无法连接 PopVid：${err.message}`,
+        message: `Can't reach PopVid: ${err.message}`,
         status: 502,
       },
     });
@@ -157,7 +157,7 @@ app.post("/api/connect", async (req, res) => {
   if (!result.ok) {
     const err = result.data?.error || {
       code: "upstream",
-      message: "未能接通",
+      message: "Couldn't connect",
       status: result.status,
     };
     console.error("[connect] popvid rejected", result.status, err);
@@ -169,7 +169,7 @@ app.post("/api/connect", async (req, res) => {
   const { session, credentials } = result.data;
   if (!session?.session_id || !credentials) {
     return res.status(502).json({
-      error: { code: "bad_payload", message: "会话响应不完整" },
+      error: { code: "bad_payload", message: "Incomplete session payload" },
     });
   }
 

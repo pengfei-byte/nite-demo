@@ -1,27 +1,27 @@
 const REASONS = {
-  client_closed: "你挂了。",
-  server_closed: "通话结束。",
-  budget_exhausted: "这轮时间到了。",
-  idle_timeout: "她等得不耐烦，先走了。",
-  media_failed: "画面没接通。",
-  viewer_gone: "信号断了。",
-  reservation_expired: "她没等到你。",
-  internal_error: "线路出了点问题。",
+  client_closed: "You hung up.",
+  server_closed: "Call ended.",
+  budget_exhausted: "The line dropped.",
+  idle_timeout: "She got tired of waiting.",
+  media_failed: "Video never connected.",
+  viewer_gone: "Signal dropped.",
+  reservation_expired: "She didn't wait.",
+  internal_error: "Something broke on the line.",
 };
 
 export default function Ended({ info, onAgain, onLobby }) {
-  const text = REASONS[info?.reason] || "通话结束。";
+  const text = REASONS[info?.reason] || "Call ended.";
   return (
     <section className="panel ended">
       <p className="eyebrow">disconnected</p>
       <h1>{text}</h1>
-      <p className="lede dim">下一张脸，不一定更好说话。</p>
+      <p className="lede dim">Next face might be even less easy.</p>
       <div className="row">
         <button className="btn btn-ember" onClick={onAgain}>
-          再来一个
+          Match again
         </button>
         <button className="btn btn-ghost" onClick={onLobby}>
-          回大厅
+          Lobby
         </button>
       </div>
     </section>

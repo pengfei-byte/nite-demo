@@ -4,14 +4,14 @@ export default function AgeGate({ onEnter }) {
       <p className="eyebrow">18+ · random video</p>
       <h1 className="wordmark">NITE</h1>
       <p className="lede">
-        随机接通一个还醒着的人。
+        Match with someone still awake.
         <br />
-        她不会一上来就对你温柔。
+        She will not be sweet just because you showed up.
       </p>
       <button className="btn btn-ember" onClick={onEnter}>
-        我已年满 18 岁
+        I&apos;m 18 or older
       </button>
-      <p className="fine">演示产品。角色为 AI，不是真人。</p>
+      <p className="fine">Demo. Characters are AI, not real people.</p>
     </section>
   );
 }
