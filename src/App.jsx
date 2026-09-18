@@ -53,6 +53,7 @@ export default function App() {
   const [match, setMatch] = useState(null);
   const [endInfo, setEndInfo] = useState(null);
   const [matchError, setMatchError] = useState("");
+  const [busyOpen, setBusyOpen] = useState(false);
   const seenRef = useRef([]);
   const closingRef = useRef(false);
 
@@ -122,7 +123,12 @@ export default function App() {
         setView("call");
       } catch (err) {
         await minWait;
-        setMatchError(err.message || "Busy tonight");
+        if (err.code === "no_capacity" || err.code === "busy") {
+          setBusyOpen(true);
+          setMatchError("");
+        } else {
+          setMatchError(err.message || "Couldn't connect");
+        }
         setView("lobby");
       }
     },
@@ -194,6 +200,27 @@ export default function App() {
           onAgain={() => startMatch()}
           onLobby={() => setView("lobby")}
         />
+      )}
+      {busyOpen && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setBusyOpen(false)}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="busy-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="busy-title">当前服务繁忙</h2>
+            <p>请稍后再试。</p>
+            <button className="btn btn-ember" onClick={() => setBusyOpen(false)}>
+              好的
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

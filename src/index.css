@@ -87,6 +87,19 @@ img { display: block; max-width: 100%; }
 }
 .lede.dim, .fine, .copy p { color: var(--muted); }
 .fine { font-size: 12px; }
+.about-api {
+  margin: 10px 0 0;
+  line-height: 1.55;
+  font-size: 13px;
+}
+.about-api a {
+  display: block;
+  margin-top: 6px;
+  color: var(--ember-2);
+  text-decoration: none;
+  word-break: break-all;
+}
+.about-api a:hover { text-decoration: underline; }
 
 .btn {
   border: 0;
@@ -163,6 +176,35 @@ img { display: block; max-width: 100%; }
   color: #ffb4a8;
   font-size: 14px;
 }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(9, 8, 7, 0.72);
+}
+.modal {
+  width: min(360px, 100%);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px 22px 20px;
+  text-align: center;
+}
+.modal h2 {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+.modal p {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+.modal .btn { width: 100%; }
 
 .nearby p {
   margin: 0 0 10px;

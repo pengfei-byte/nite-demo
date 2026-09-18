@@ -17,6 +17,12 @@ export default function Lobby({
 
       <div className="copy">
         <h1>Next second, you&apos;re live.</h1>
+        <p className="fine about-api">
+          这是基于 PopVid R2 API 实现的 AI 实时视频对话应用。
+          <a href="https://popvid.ai/openapi" target="_blank" rel="noreferrer">
+            https://popvid.ai/openapi
+          </a>
+        </p>
       </div>
 
       <div className="moods">
