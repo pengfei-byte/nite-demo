@@ -214,10 +214,10 @@ export default function App() {
             aria-labelledby="busy-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="busy-title">当前服务繁忙</h2>
-            <p>请稍后再试。</p>
+            <h2 id="busy-title">Service is busy</h2>
+            <p>Please try again later.</p>
             <button className="btn btn-ember" onClick={() => setBusyOpen(false)}>
-              好的
+              OK
             </button>
           </div>
         </div>
