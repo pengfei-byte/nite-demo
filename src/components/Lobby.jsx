@@ -1,27 +1,11 @@
-import { useEffect, useRef } from "react";
-
 export default function Lobby({
   roster,
   mood,
   onMood,
-  localStream,
   error,
   onStart,
   onPick,
-  onCam,
 }) {
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    onCam?.();
-  }, [onCam]);
-
-  useEffect(() => {
-    if (videoRef.current && localStream) {
-      videoRef.current.srcObject = localStream;
-    }
-  }, [localStream]);
-
   return (
     <section className="panel lobby">
       <header className="topbar">
@@ -30,16 +14,6 @@ export default function Lobby({
           <i /> {roster.online || "—"} online
         </span>
       </header>
-
-      <div className="me-preview">
-        <video ref={videoRef} autoPlay muted playsInline />
-        {!localStream && (
-          <button className="ghost-cam" onClick={onCam}>
-            Turn camera on
-          </button>
-        )}
-        <span className="chip">You</span>
-      </div>
 
       <div className="copy">
         <h1>Next second, you&apos;re live.</h1>

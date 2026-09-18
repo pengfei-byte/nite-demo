@@ -59,7 +59,7 @@ async function createPopvidSession(character, { dropSeed = false } = {}) {
     },
     scene: { prompt: character.scene },
     language: "en",
-    limits: { max_turns: 200, turn_rate_per_min: 20 },
+    limits: { max_duration_ms: 300_000, max_turns: 200, turn_rate_per_min: 20 },
     credentials_ttl_ms: 600_000,
     metadata: {
       product: "nite",

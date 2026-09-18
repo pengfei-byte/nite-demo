@@ -173,11 +173,9 @@ export default function App() {
           roster={roster}
           mood={mood}
           onMood={setMood}
-          localStream={localStream}
           error={matchError}
           onStart={() => startMatch()}
           onPick={(id) => startMatch({ characterId: id })}
-          onCam={ensureCam}
         />
       )}
       {view === "matching" && <Matching roster={roster} />}
